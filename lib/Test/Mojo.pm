@@ -5,6 +5,7 @@ use Mojo::IOLoop;
 use Mojo::Message::Response;
 use Mojo::UserAgent;
 use Mojo::Util qw/decode encode/;
+use Mojo::JSON::Pointer;
 use Test::More ();
 
 has ua => sub { Mojo::UserAgent->new->ioloop(Mojo::IOLoop->singleton) };
@@ -168,6 +169,30 @@ sub json_content_is {
   local $Test::Builder::Level = $Test::Builder::Level + 1;
   Test::More::is_deeply $self->tx->res->json, $struct,
     $desc || 'exact match for JSON structure';
+  return $self;
+}
+
+sub json_is {
+  my ($self, $pointer, $val, $desc) = @_;
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  Test::More::is_deeply $self->tx->res->json($pointer), $val,
+    $desc || 'exact match for JSON pointer value';
+  return $self;
+}
+
+sub json_has {
+  my ($self, $pointer, $desc) = @_;
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  Test::More::ok Mojo::JSON::Pointer->exists($self->tx->res->json, $pointer),
+    $desc || qq/JSON has "$pointer"/;
+  return $self;
+}
+
+sub json_has_not {
+  my ($self, $pointer, $desc) = @_;
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  Test::More::ok !Mojo::JSON::Pointer->exists($self->tx->res->json, $pointer),
+    $desc || qq/JSON does not have "$pointer"/;
   return $self;
 }
 
@@ -563,6 +588,31 @@ Opposite of C<header_like>.
   $t = $t->json_content_is({foo => 'bar', baz => 23}, 'right content!');
 
 Check response content for JSON data.
+
+=head2 C<json_is>
+
+  $t = $t->json_is('/foo' => {bar => [1, 2, 3]});
+  $t = $t->json_is('/foo/bar' => [1, 2, 3]);
+  $t = $t->json_is('/foo/bar/1' => 2, 'right value!');
+
+Check the value extracted from a JSON response using the given JSON
+Pointer.
+
+=head2 C<json_has>
+
+  $t = $t->json_has('/foo');
+  $t = $t->json_has('/minibar', 'has a minibar!');
+
+Check that a JSON response has the value specified by the given JSON
+Pointer.
+
+=head2 C<json_has_not>
+
+  $t = $t->json_has_not('/foo');
+  $t = $t->json_has_not('/minibar', 'no minibar!');
+
+Check that a JSON response does not have the value specified by the
+given JSON Pointer.
 
 =head2 C<max_redirects>
 
