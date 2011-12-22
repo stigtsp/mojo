@@ -9,6 +9,7 @@ use Mojo::JSON;
 use Mojo::Parameters;
 use Mojo::Upload;
 use Mojo::Util qw/decode url_unescape/;
+use Mojo::JSON::Pointer;
 use Scalar::Util 'weaken';
 
 use constant CHUNK_SIZE => $ENV{MOJO_CHUNK_SIZE} || 131072;
@@ -287,9 +288,13 @@ sub is_limit_exceeded {
 sub is_multipart { shift->content->is_multipart }
 
 sub json {
-  my $self = shift;
+  my ($self, $pointer) = @_;
   return if $self->is_multipart;
-  return $self->json_class->new->decode($self->body);
+  my $json = $self->json_class->new->decode($self->body);
+  if ($pointer) {
+    $json = Mojo::JSON::Pointer->get($json, $pointer);
+  }
+  return $json;
 }
 
 sub leftovers { shift->content->leftovers }
@@ -785,11 +790,14 @@ Check if message content is a L<Mojo::Content::MultiPart> object.
 
   my $object = $message->json;
   my $array  = $message->json;
+  my $value  = $message->json('/foo/bar/1');
 
 Decode JSON message body directly using L<Mojo::JSON> if possible, returns
-C<undef> otherwise.
+C<undef> otherwise. Takes an optional JSON Pointer to extract a specific
+value from the JSON content.
 
   say $message->json->{foo}->{bar}->[23];
+  say $message->json('/foo/bar/23');
 
 =head2 C<leftovers>
 
