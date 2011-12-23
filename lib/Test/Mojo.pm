@@ -175,24 +175,24 @@ sub json_content_is {
 sub json_is {
   my ($self, $pointer, $val, $desc) = @_;
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  Test::More::is_deeply $self->tx->res->json($pointer), $val,
-    $desc || 'exact match for JSON pointer value';
+  Test::More::is_deeply($self->tx->res->json($pointer),
+    $val, $desc || 'exact match for JSON pointer value');
   return $self;
 }
 
 sub json_has {
   my ($self, $pointer, $desc) = @_;
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  Test::More::ok Mojo::JSON::Pointer->exists($self->tx->res->json, $pointer),
-    $desc || qq/JSON has "$pointer"/;
+  Test::More::ok(Mojo::JSON::Pointer->exists($self->tx->res->json, $pointer),
+    $desc || qq/JSON has "$pointer"/);
   return $self;
 }
 
 sub json_has_not {
   my ($self, $pointer, $desc) = @_;
   local $Test::Builder::Level = $Test::Builder::Level + 1;
-  Test::More::ok !Mojo::JSON::Pointer->exists($self->tx->res->json, $pointer),
-    $desc || qq/JSON does not have "$pointer"/;
+  Test::More::ok(!Mojo::JSON::Pointer->exists($self->tx->res->json, $pointer),
+    $desc || qq/JSON does not have "$pointer"/);
   return $self;
 }
 

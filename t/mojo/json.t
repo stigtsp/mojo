@@ -2,9 +2,10 @@ use Mojo::Base -strict;
 
 use utf8;
 
-use Test::More tests => 118;
+use Test::More tests => 132;
 
 use Mojo::ByteStream 'b';
+use Mojo::JSON::Pointer;
 
 # "We should be safe up here. I'm pretty sure fires can't climb trees."
 use_ok 'Mojo::JSON';
@@ -307,3 +308,23 @@ is $json->decode("[\"foo\",\n\"bar\",\n\"bazra\"]lalala"), undef,
 is $json->error,
   'Malformed JSON: Unexpected data after array at line 3, offset 8.',
   'right error';
+
+# JSON Pointers
+my $p = "Mojo::JSON::Pointer";
+is $p->exists({foo=>1}, '/foo'), 1, '/foo exists';
+is $p->exists({foo=>1}, '/bar'), 0, '/bar does not exist';
+is $p->exists({foo=>{bar=>1}}, '/foo/bar'), 1, '/foo/bar exists';
+is $p->exists({foo=>[1,2,3]}, '/foo/0'), 1, '/foo/0 exists';
+is $p->exists({foo=>[1,2,3]}, '/foo/9'), 0, '/foo/9 does not exist';
+is $p->exists({foo=>[1,2,3]}, '/foo/bar'), 0, '/foo/bar does not exist';
+is $p->get({foo=>"bar"}, '/foo'), "bar", '/foo is bar';
+is $p->get({foo=>{bar=>42}}, '/foo/bar'), 42,
+  '/foo/bar is 42';
+is_deeply $p->get({foo=>{bar=>{baz=>1}}}, '/foo/bar'), {baz=>1},
+  '/foo/bar is baz=>1';
+is_deeply $p->get({foo=>{bar=>[1,2,3]}}, '/foo/bar'), [1,2,3],
+  '/foo/bar is 1,2,3';
+is $p->get({foo=>{bar=>[1,2,3]}}, '/foo/bar/0'), 1, '/foo/bar/0 is 1';
+is $p->get({foo=>{bar=>[1,2,3]}}, '/foo/bar/1'), 2, '/foo/bar/1 is 2';
+is $p->get({foo=>{bar=>[1,2,3]}}, '/foo/bar/2'), 3, '/foo/bar/2 is 3';
+is $p->get({foo=>{bar=>[1,2,3]}}, '/foo/bar/6'), undef, '/foo/bar/6 is undef';
