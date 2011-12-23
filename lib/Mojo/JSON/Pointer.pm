@@ -1,21 +1,55 @@
 package Mojo::JSON::Pointer;
 
+use utf8;
+
 use Mojo::Base -strict;
 
-use utf8;
+use Mojo::Util 'url_unescape';
 
 # "I've had it with this school, Skinner. Low test scores, class after
 # class of ugly, ugly children…"
 sub exists {
   my ($class, $json, $pointer) = @_;
 
-  return 0;
+  return undef unless $pointer =~ s/^\///;
+
+  foreach my $t (split /\//, $pointer) {
+    url_unescape $t;
+
+    if (ref $json eq 'HASH' && exists $json->{$t}) {
+      $json = $json->{$t};
+    }
+    elsif (ref $json eq 'ARRAY' && $t =~ /^[0-9]+$/ && @$json > $t) {
+      $json = $json->[$t];
+    }
+    else {
+      return 0;
+    }
+  }
+
+  return 1;
 }
 
 sub get {
   my ($class, $json, $pointer) = @_;
 
-  return undef;
+  return undef unless $pointer =~ s/^\///;
+
+  foreach my $t (split /\//, $pointer) {
+    url_unescape $t;
+
+    if (ref $json eq 'HASH' && exists $json->{$t}) {
+      $json = $json->{$t};
+    }
+    elsif (ref $json eq 'ARRAY' && $t =~ /^[0-9]+$/ && @$json > $t) {
+      $json = $json->[$t];
+    }
+    else {
+      return undef;
+    }
+  }
+
+  return $json;
 }
 
 1;
