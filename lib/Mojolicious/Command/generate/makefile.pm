@@ -9,10 +9,13 @@ has usage       => "usage: $0 generate makefile\n";
 #  And as an environmentalist, I'm against that."
 sub run {
   my $self  = shift;
-  my $class = $ENV{MOJO_APP};
-  $class = 'MyApp' if !$class || ref $class;
-  my $path = $self->class_to_path($class);
-  my $name = $self->class_to_file($class);
+  my $class = $ENV{MOJO_APP} || 'MyApp';
+  my $path  = 'lib/' . $self->class_to_path($class);
+  my $name  = 'script/' . $self->class_to_file($class);
+
+  ($name, $path, $class) = map +($0 =~ /(\w+)$/)[0] => 1 .. 3
+    if $class->isa('Mojolicious::Lite');
+
   $self->render_to_rel_file('makefile', 'Makefile.PL', $class, $path, $name);
 }
 
@@ -28,9 +31,9 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
   NAME         => '<%= $class %>',
-  VERSION_FROM => 'lib/<%= $path %>',
+  VERSION_FROM => '<%= $path %>',
   AUTHOR       => 'A Good Programmer <nospam@cpan.org>',
-  EXE_FILES    => ['script/<%= $name %>'],
+  EXE_FILES    => ['<%= $name %>'],
   PREREQ_PM    => {'Mojolicious' => '2.0'},
   test         => {TESTS => 't/*.t'}
 );
