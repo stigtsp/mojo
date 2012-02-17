@@ -38,13 +38,13 @@ sub capture;
 *capture = sub { shift->(@_) };
 sub escape;
 *escape = sub {
-  return "$_[0]" if ref $_[0] && ref $_[0] eq 'Mojo::ByteStream';
-  my $v;
-  {
-    no warnings 'uninitialized';
-    $v = "$_[0]";
+  my @values = @_;
+  for (@values) {
+    next unless defined $_;
+    next if ref $_ && ref $_ eq 'Mojo::ByteStream';
+    $_ = Mojo::Util::xml_escape $_;
   }
-  Mojo::Util::xml_escape $v;
+  wantarray ? @values : $values[0];
 };
 use Mojo::Base -strict;
 EOF
@@ -69,7 +69,7 @@ sub build {
       if ($type eq 'cpen') {
 
         # End block
-        $lines[-1] .= 'return b($_M) }';
+        $lines[-1] .= "return b(join '', \@_M) }";
 
         # No following code
         my $next = $line->[$j + 3];
@@ -82,7 +82,7 @@ sub build {
         # Quote and fix line ending
         $value = quotemeta($value);
         $value .= '\n' if $newline;
-        $lines[-1] .= "\$_M .= \"" . $value . "\";" if length $value;
+        $lines[-1] .= "push \@_M, \"" . $value . "\";" if length $value;
       }
 
       # Code or multiline expression
@@ -97,12 +97,11 @@ sub build {
           # Escaped
           my $a = $self->auto_escape;
           if (($type eq 'escp' && !$a) || ($type eq 'expr' && $a)) {
-            $lines[-1] .= "\$_M .= escape";
-            $lines[-1] .= " +$value" if length $value;
+            $lines[-1] .= "push \@_M, escape +$value" if length $value;
           }
 
           # Raw
-          else { $lines[-1] .= "\$_M .= $value" }
+          else { $lines[-1] .= "push \@_M, $value" }
         }
 
         # Multiline
@@ -120,7 +119,7 @@ sub build {
       }
 
       # Capture start
-      if ($type eq 'cpst') { $cpst = " sub { my \$_M = ''; " }
+      if ($type eq 'cpst') { $cpst = ' sub { my @_M; ' }
     }
   }
 
@@ -130,9 +129,9 @@ sub build {
   my $namespace = $self->namespace;
   $lines[0] ||= '';
   $lines[0] =
-    "package $namespace; $HELPERS sub { my \$_M = ''; $prepend; do {"
-    . $lines[0];
-  $lines[-1] .= "$append; \$_M; } };";
+      "package $namespace; $HELPERS sub { no warnings 'uninitialized';"
+    . " my \@_M; $prepend; do { $lines[0]";
+  $lines[-1] .= "$append; join '', \@_M; } };";
 
   # Final code
   $self->code(join "\n", @lines);

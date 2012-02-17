@@ -17,7 +17,7 @@ use Mojo::Base -strict;
 
 use utf8;
 
-use Test::More tests => 199;
+use Test::More tests => 200;
 
 use File::Spec::Functions qw/catfile splitdir/;
 use File::Temp;
@@ -27,9 +27,15 @@ use FindBin;
 #  like God must feel when he's holding a gun."
 use_ok 'Mojo::Template';
 
+# Context
+my $mt = Mojo::Template->new;
+my $output =
+  $mt->render('<%= @{["a", "b", "c"]} %>:<%== @{["a", "b", "c"]} %>');
+is $output, "abc:abc\n", 'same context';
+
 # Trim tag
-my $mt     = Mojo::Template->new;
-my $output = $mt->render(" ♥    <%= 'test♥' =%> \n");
+$mt     = Mojo::Template->new;
+$output = $mt->render(" ♥    <%= 'test♥' =%> \n");
 is $output, ' ♥test♥', 'tag trimmed';
 
 # Trim expression
@@ -904,7 +910,7 @@ is $output, "23\n", 'right result';
 
 # Appending code
 $mt = Mojo::Template->new;
-$mt->append('$_M = "FOO!"');
+$mt->append('@_M = ("FOO!")');
 $output = $mt->render('23');
 is $output, "FOO!", 'appending code';
 

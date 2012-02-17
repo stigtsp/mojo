@@ -446,17 +446,17 @@ Blocks are always delimited by the C<begin> and C<end> keywords.
 A naive translation to Perl pseudocode could look like this.
 
   @@ welcome.html.pl
-  my $output = '';
+  my @output;
   my $block  = sub {
     my $name   = shift;
-    my $output = '';
-    $output .= "Hello $name.";
-    return $output;
+    my @output;
+    push @output, "Hello $name.";
+    return join '', @output;
   }
   for (1 .. 10) {
-    $output .= $block->('Sebastian');
+    push @output, $block->('Sebastian');
   }
-  return $output;
+  return join '', @output;
 
 =head2 Content blocks
 
