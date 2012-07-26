@@ -9,6 +9,8 @@ use Mojo::JSON::Pointer;
 use Mojo::UserAgent;
 use Mojo::Util qw(decode encode);
 
+eval 'use DDP alias => Dumper => colored => 1; 1' || eval 'use Data::Dumper';
+
 has description => "Perform HTTP 1.1 request.\n";
 has usage       => <<"EOF";
 usage: $0 get [OPTIONS] URL [SELECTOR|JSON-POINTER] [COMMANDS]
@@ -145,7 +147,11 @@ sub run {
 sub _json {
   my $json = Mojo::JSON->new;
   return unless my $data = $json->decode(shift);
-  return unless defined($data = Mojo::JSON::Pointer->get($data, shift));
+
+  my $selector = shift;
+
+  return say(Dumper($data)) if $selector eq 'dump';
+  return unless defined($data = Mojo::JSON::Pointer->get($data, $selector));
   ref $data ~~ [qw(HASH ARRAY)] ? say($json->encode($data)) : _say($data);
 }
 
