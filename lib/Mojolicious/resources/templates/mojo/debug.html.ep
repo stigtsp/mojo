@@ -7,7 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
     %= javascript '/mojo/jquery/jquery.js'
-    %= javascript '/mojo/prettify/run_prettify.js'
+    %= javascript '/mojo/prettify/prettify.js'
+    %= stylesheet '/mojo/prettify/prettify.css'
     %= stylesheet '/mojo/prettify/prettify-mojo-dark.css'
     <style>
       a img { border: 0 }
@@ -144,6 +145,7 @@
       $(function () {
         mojoDrawer('#trace', '#frames');
         mojoDrawer('#more', '#infos');
+        PR.prettyPrint();
       });
     </script>
     <div id="wrapperlicious">
